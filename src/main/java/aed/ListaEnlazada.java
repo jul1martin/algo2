@@ -31,7 +31,9 @@ public class ListaEnlazada<T> implements Secuencia<T> {
     }
 
     public ListaEnlazada(ListaEnlazada<T> lista) {
-        throw new UnsupportedOperationException("No implementada aun");
+        primero = new Nodo(lista.primero);
+        ultimo = new Nodo(lista.ultimo);
+        size = lista.size;
     }
 
     public int longitud() {
@@ -80,6 +82,11 @@ public class ListaEnlazada<T> implements Secuencia<T> {
 
         Nodo newNodo = new Nodo(elem);
 
+        if (size == 1) {
+            primero = ultimo;
+            primero.sig = newNodo;
+        }
+
         ultimo.sig = newNodo;
 
         newNodo.ant = ultimo;
@@ -97,14 +104,12 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         // if(i == (size - 1)) return ultimo.valor;
 
         Boolean usarPrimero = i <= (size / 2);
-        System.out.println(usarPrimero);
-        T res = null;
+        Nodo nodoRes = usarPrimero ? primero : ultimo;
+        T res = nodoRes.valor;
+
+        Iterador<T> iterador = iterador(nodoRes);
 
         if(usarPrimero) {
-            res = primero.valor;
-
-            Iterador<T> iterador = iterador(primero);
-            
             int pos = 0;
     
             while(iterador.haySiguiente() && i != pos) {
@@ -112,17 +117,11 @@ public class ListaEnlazada<T> implements Secuencia<T> {
     
                 pos++;
             }
-    
         } else {
-            res = ultimo.valor;
-
-            Iterador<T> iterador = iterador(ultimo);
-            
             int pos = size - 1;
     
             while(iterador.hayAnterior() && i != pos) {
                 res = iterador.anterior();
-                System.out.println(res);
     
                 pos--;
             }
@@ -132,13 +131,13 @@ public class ListaEnlazada<T> implements Secuencia<T> {
     }
 
     public void eliminar(int i) {
-        T exists = obtener(i);
+        Boolean exists = obtener(i) != null;
         
-        if(exists == null) return;
+        if(!exists) return;
 
         Boolean usarPrimero = i <= (size / 2);
-
         Nodo eliminar = usarPrimero ? primero : ultimo;
+        
         Iterador<T> iterador = iterador(eliminar);
 
         if(usarPrimero) {
@@ -146,34 +145,99 @@ public class ListaEnlazada<T> implements Secuencia<T> {
 
             while(iterador.haySiguiente() && i != pos) {
                 eliminar = eliminar.sig;
-
+                
                 iterador.siguiente();
+
+                pos++;
             }
         } else {
             int pos = size - 1;
     
             while(iterador.hayAnterior() && i != pos) {
+                iterador.anterior();
+
                 eliminar = eliminar.ant;
                 
                 pos--;
             }
         }
         
-        System.out.println(eliminar.valor);
         Nodo anterior = eliminar.ant;
         Nodo siguiente = eliminar.sig;
 
-        anterior.sig = siguiente;
-        siguiente.ant = anterior;
+        if(siguiente != null) siguiente.ant = anterior;
+        if(anterior != null) anterior.sig = siguiente;
+
+        if(i == 0) primero = siguiente;
+        if(i == (size - 1)) ultimo = anterior;
+
+        size--;
     }
 
     public void modificarPosicion(int indice, T elem) {
-        throw new UnsupportedOperationException("No implementada aun");
+        Boolean exists = obtener(indice) != null;
+        
+        if(!exists) return;
+
+        Boolean usarPrimero = indice <= (size / 2);
+        Nodo modificar = usarPrimero ? primero : ultimo;
+        
+        Iterador<T> iterador = iterador(modificar);
+
+        if(usarPrimero) {
+            int pos = 0;
+
+            while(iterador.haySiguiente() && indice != pos) {
+                modificar = modificar.sig;
+                
+                iterador.siguiente();
+
+                pos++;
+            }
+        } else {
+            int pos = size - 1;
+    
+            while(iterador.hayAnterior() && indice != pos) {
+                iterador.anterior();
+
+                modificar = modificar.ant;
+                
+                pos--;
+            }
+        }
+
+        Nodo newNodo = new Nodo(elem);
+
+        if(modificar.ant != null) {
+            modificar.ant.sig = newNodo;
+        }
+
+        if(modificar.ant != null) {
+            modificar.sig.ant = newNodo;
+        }
+
+        return;
     }
     
     @Override
     public String toString() {
-        throw new UnsupportedOperationException("No implementada aun");
+        String string = "[";
+
+        Iterador<T> iterador = iterador(primero);
+
+        if(primero != null) {
+            string = string.concat(primero.valor.toString());
+        } 
+
+        while (iterador.haySiguiente()) {
+            // System.out.println(iterador.siguiente().toString());
+
+            string = string.concat(", " + iterador.siguiente().toString());
+        }
+
+        string = string.concat("]");
+
+        return string;
     }
 
     private class ListaIterador implements Iterador<T> {
@@ -184,10 +248,14 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         }
 
         public boolean haySiguiente() {
+            if(nodo == null) return false;
+            
             return nodo.sig != null;
         }
         
         public boolean hayAnterior() {
+            if(nodo == null) return false;
+
             return nodo.ant != null;
         }
 
