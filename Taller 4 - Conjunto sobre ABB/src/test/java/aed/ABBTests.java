@@ -365,7 +365,7 @@ class ABBTests {
             assertTrue(conjunto.pertenece(k));
             if (i % 2 == 0) {
                 conjunto.eliminar(k);
-
+                System.out.println("Numero de ejecucion: " + (i));
                 assertFalse(conjunto.pertenece(k));
             }
         }
