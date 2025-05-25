@@ -20,6 +20,8 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         }
 
         Nodo(T v) {
+            sig = null;
+            ant = null;
             valor = v;
         }
     }
@@ -82,11 +84,6 @@ public class ListaEnlazada<T> implements Secuencia<T> {
 
         Nodo newNodo = new Nodo(elem);
 
-        if (size == 1) {
-            primero = ultimo;
-            primero.sig = newNodo;
-        }
-
         ultimo.sig = newNodo;
 
         newNodo.ant = ultimo;
@@ -100,34 +97,33 @@ public class ListaEnlazada<T> implements Secuencia<T> {
     public T obtener(int i) {
         if (i >= size) return null;
 
-        // if(i == 0) return primero.valor;
-        // if(i == (size - 1)) return ultimo.valor;
-
         Boolean usarPrimero = i <= (size / 2);
         Nodo nodoRes = usarPrimero ? primero : ultimo;
         T res = nodoRes.valor;
 
-        Iterador<T> iterador = iterador(nodoRes);
-
         if(usarPrimero) {
             int pos = 0;
-    
-            while(iterador.haySiguiente() && i != pos) {
-                res = iterador.siguiente();
-    
+
+            while(nodoRes.sig != null && i != pos) {
+                res = nodoRes.sig.valor;
+                
+                nodoRes = nodoRes.sig;
+
                 pos++;
             }
         } else {
             int pos = size - 1;
-    
-            while(iterador.hayAnterior() && i != pos) {
-                res = iterador.anterior();
-    
+
+            while(nodoRes.ant != null && i != pos) {
+                res = nodoRes.ant.valor;
+
+                nodoRes = nodoRes.ant;
+                
                 pos--;
             }
         }
 
-        return res;
+        return res;    
     }
 
     public void eliminar(int i) {
@@ -137,31 +133,26 @@ public class ListaEnlazada<T> implements Secuencia<T> {
 
         Boolean usarPrimero = i <= (size / 2);
         Nodo eliminar = usarPrimero ? primero : ultimo;
-        
-        Iterador<T> iterador = iterador(eliminar);
 
         if(usarPrimero) {
             int pos = 0;
 
-            while(iterador.haySiguiente() && i != pos) {
+            while(eliminar.sig != null && i != pos) {
                 eliminar = eliminar.sig;
                 
-                iterador.siguiente();
-
                 pos++;
             }
         } else {
             int pos = size - 1;
-    
-            while(iterador.hayAnterior() && i != pos) {
-                iterador.anterior();
 
+            while(eliminar.ant != null && i != pos) {
                 eliminar = eliminar.ant;
                 
                 pos--;
             }
         }
-        
+
+
         Nodo anterior = eliminar.ant;
         Nodo siguiente = eliminar.sig;
 
@@ -171,7 +162,7 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         if(i == 0) primero = siguiente;
         if(i == (size - 1)) ultimo = anterior;
 
-        size--;
+        size--;    
     }
 
     public void modificarPosicion(int indice, T elem) {
@@ -181,103 +172,117 @@ public class ListaEnlazada<T> implements Secuencia<T> {
 
         Boolean usarPrimero = indice <= (size / 2);
         Nodo modificar = usarPrimero ? primero : ultimo;
-        
-        Iterador<T> iterador = iterador(modificar);
 
         if(usarPrimero) {
             int pos = 0;
 
-            while(iterador.haySiguiente() && indice != pos) {
+            while(modificar.sig != null && indice != pos) {
                 modificar = modificar.sig;
-                
-                iterador.siguiente();
 
                 pos++;
             }
         } else {
             int pos = size - 1;
-    
-            while(iterador.hayAnterior() && indice != pos) {
-                iterador.anterior();
 
+            while(modificar.ant != null && indice != pos) {
                 modificar = modificar.ant;
                 
                 pos--;
             }
         }
-
+        
         Nodo newNodo = new Nodo(elem);
 
         if(modificar.ant != null) {
             modificar.ant.sig = newNodo;
+            newNodo.ant = modificar.ant;
         }
 
-        if(modificar.ant != null) {
+        if(modificar.sig != null) {
             modificar.sig.ant = newNodo;
+            newNodo.sig = modificar.sig;
         }
 
-        return;
+        return;    
     }
-    
+
     @Override
     public String toString() {
         String string = "[";
-
-        Iterador<T> iterador = iterador(primero);
 
         if(primero != null) {
             string = string.concat(primero.valor.toString());
         } 
 
-        while (iterador.haySiguiente()) {
-            // System.out.println(iterador.siguiente().toString());
+        while (primero.sig != null) {
+            primero = primero.sig;
 
-            string = string.concat(", " + iterador.siguiente().toString());
+            string = string.concat(", " + primero.valor.toString());
         }
 
         string = string.concat("]");
 
-        return string;
+        return string;    
     }
 
     private class ListaIterador implements Iterador<T> {
         Nodo nodo;
+        String lastItOrientation;
+
 
         public ListaIterador(Nodo n) {
             nodo = n;
+            lastItOrientation = null;
         }
 
         public boolean haySiguiente() {
-            if(nodo == null) return false;
-            
-            return nodo.sig != null;
+            if(lastItOrientation == "ant") return nodo != null;
+
+            return nodo != null && nodo.sig != null;
         }
         
         public boolean hayAnterior() {
-            if(nodo == null) return false;
-
-            return nodo.ant != null;
+            if(lastItOrientation == "sig") return nodo != null;
+            
+            return nodo != null && nodo.ant != null;
         }
 
         public T siguiente() {
-            nodo = nodo.sig;
+            if(nodo == null) return null;
+            
+            if(lastItOrientation != "sig") {
+                lastItOrientation = "sig";
+                T valor = nodo.valor;
 
-            return nodo.valor; 
+                return valor;
+            }
+
+            nodo = nodo.sig;
+            T valor = nodo.valor;
+
+            return valor;
         }
+        
 
         public T anterior() {
-            nodo = nodo.ant;
+            if(nodo == null) return null;
 
-            return nodo.valor;
+            if(lastItOrientation != "ant") {
+                lastItOrientation = "ant";
+                T valor = nodo.valor;
+
+                return valor;
+            }
+
+            nodo = nodo.ant;
+            T valor = nodo.valor;
+            
+            return valor;
         }
     }
 
     public Iterador<T> iterador() {
         return new ListaIterador(primero);
-    }
-
-    public Iterador<T> iterador(Nodo nodo) {
-        return new ListaIterador(nodo);
     }
 
 }
