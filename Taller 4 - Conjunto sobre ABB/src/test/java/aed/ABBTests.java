@@ -291,6 +291,7 @@ class ABBTests {
         assertEquals(22, iterador.siguiente());
         assertEquals(24, iterador.siguiente());
         assertEquals(25, iterador.siguiente());
+
     }
 
     @Test
@@ -320,11 +321,10 @@ class ABBTests {
         c.insertar(6);
         c.insertar(8);
         assertEquals("{4,5,6,7,8}", c.toString());
-
         c.eliminar(5);
         c.eliminar(7);
-
         assertEquals("{4,6,8}", c.toString());
+
     }
 
     Integer NCLAVES = 1000;
@@ -365,7 +365,7 @@ class ABBTests {
             assertTrue(conjunto.pertenece(k));
             if (i % 2 == 0) {
                 conjunto.eliminar(k);
-                System.out.println("Numero de ejecucion: " + (i));
+
                 assertFalse(conjunto.pertenece(k));
             }
         }

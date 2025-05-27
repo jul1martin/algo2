@@ -7,7 +7,6 @@ import java.util.*;
 public class ABB<T extends Comparable<T>> implements Conjunto<T> {
     private Nodo _raiz;
     private int _cardinal;
-    // private int _altura;
     
     private class Nodo {
         T valor;
@@ -21,160 +20,142 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             der = null;
             padre = null;
         }
-
-        // Nodo(Nodo nodo) {
-        //     valor = nodo.valor;
-        //     izq = nodo.izq;
-        //     der = nodo.der;
-        //     padre = nodo.padre;
-        // }
     }
 
     public ABB() {
         _raiz = null;
         _cardinal = 0;
-        // _altura = 0;
     }
 
     public int cardinal() {
         return _cardinal;
     }
 
-    public T minimo(){
-        Nodo nodo = getMinNodo();
+    public T minimo(Nodo base){
+        Nodo nodo = base != null ? base : _raiz;
 
-        return nodo != null ? nodo.valor : null;  
+        if(nodo == null) return null;
+
+        return nodo.izq != null ? minimo(nodo.izq) : nodo.valor;
+    }
+
+    public T minimo() {
+        return minimo(_raiz);
     }
 
     public Nodo getMinNodo () {
-        if(_raiz == null) return null;
-
-        Nodo min = _raiz;
-
-        // System.out.println("Minimo base" + min.valor);
-        
-        while(min.izq != null) {
-            min = min.izq;
-            // System.out.println("Nuevo Minimo " + min.valor);
-
-        }
-
-        return min; 
+        return getMinNodo(_raiz);
     }
 
-    public T maximo(){
-        if(_raiz == null) return null;
+    public Nodo getMinNodo (Nodo nodo) {
+        if(nodo == null) return null;
 
-        Nodo max = _raiz;
+        return nodo.izq != null ? getMinNodo(nodo.izq) : nodo; 
+    }
 
-        // System.out.println("Max base " + max.valor);
+    public T maximo(Nodo nodo){
+        if(nodo == null) return null;
 
-        while(max.der != null) {
-            max = max.der;
-            // System.out.println("Max " + max.valor);
+        return nodo.der != null ? maximo(nodo.der) : nodo.valor;     
+    }
+
+    public T maximo() {
+        return maximo(_raiz);     
+    }
+
+    public void insertar(T elem, Nodo base){
+        int status = base.valor.compareTo(elem);
+
+        if (status > 0) {
+            if(base.izq == null) {
+                Nodo newNodo = new Nodo(elem);
+                newNodo.padre = base;
+                base.izq = newNodo;
+    
+                _cardinal++;
+            } else {
+                insertar(elem, base.izq);
+            }
         }
 
-        return max.valor;     
+        if (status < 0) {
+            if(base.der == null) {
+                Nodo newNodo = new Nodo(elem);
+                newNodo.padre = base;
+                base.der = newNodo;
+    
+                _cardinal++;
+            } else {
+                insertar(elem, base.der);
+            }
+        }
     }
 
     public void insertar(T elem){
-        if(pertenece(elem)) return;
-
-        _cardinal++;
-
-        Nodo newNodo = new Nodo(elem);
-
         if(_raiz == null) {
-            _raiz = newNodo;
-            
-            return;
-        }
+            _raiz = new Nodo(elem);
 
-        Nodo actual = _raiz;
+            _cardinal++;
+        } else {
+            int status = _raiz.valor.compareTo(elem);
 
-        int status = 0;
+            if(status == 0) return;
 
-        while(actual != null)  {
-            status = elem.compareTo(actual.valor);
+            Nodo next = status > 0 ? _raiz.izq : _raiz.der;
 
-            // elem > valor raiz
-            if(status > 0) {
-                if (actual.der == null) {
-                    break;
+            if(next == null) {
+                Nodo newNodo = new Nodo(elem);
+                newNodo.padre = _raiz;
+
+                if(status > 0) {
+                    _raiz.izq = newNodo;
+                } else {
+                    _raiz.der = newNodo;
                 }
 
-                actual = actual.der;
-
-                continue;
+                _cardinal++;
+            } else {
+                insertar(elem, next);
             }
-
-            if (actual.izq == null) {
-                break;
-            }
-
-            actual = actual.izq;
-    
-            // elem < valor raiz
         }
-        
-        if(status > 0) {
-            newNodo.padre = actual;
-
-            actual.der = newNodo;
-            
-
-            // System.out.println("Inserto " + newNodo.valor + ", padre es " + newNodo.padre.valor);
-            return;
-        }
-
-        newNodo.padre = actual;
-
-        actual.izq = newNodo;
-
-        return;
     }
 
     public boolean pertenece(T elem){
         return obtener(elem) != null;
     }
 
-    public Nodo obtener(T elem){
-        Nodo actual = _raiz;
+    public Nodo obtener(T elem) {
+        return obtener(elem, null);
+    }
 
-        int status = 0;
+    public Nodo obtener(T elem, Nodo base){
+        Nodo actual = base != null ? base : _raiz;
 
-        // && (actual.izq == null && actual.der == null))
-        while(actual != null)  {
-            status = elem.compareTo(actual.valor);
+        if(actual == null) return null;
 
-            if(status == 0) return actual;
+        int status = actual.valor.compareTo(elem);
 
-            if(status > 0) {
-                actual = actual.der;
+        if(status == 0) return actual;
 
-                continue;
-            }
+        Nodo next = status > 0 ? actual.izq : actual.der;
 
-            actual = actual.izq;
-    
-            // elem < valor raiz
-        }
+        if(next == null) return null;
 
-        return null;
+        return obtener(elem, next);
     }
 
     public void eliminar(T elem){
-        if(!pertenece(elem)) return;
+        Nodo eliminar = obtener(elem);
+
+        if(eliminar == null) return;
 
         _cardinal--;
 
-        Nodo eliminar = obtener(elem);
         Nodo padreEliminar = eliminar.padre;
 
         System.out.println("Valor a eliminar: " + eliminar.valor);
 
         // no tiene hijos
-        // correcto
         if(eliminar.izq == null && eliminar.der == null) {
             System.out.println("No tiene hijos");
 
@@ -195,36 +176,18 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         if(eliminar.izq != null && eliminar.der != null) {
             Nodo sucesor = sucesor(eliminar);
 
-            System.out.println(elem + " Tiene 2 hijos");
-            System.out.println(sucesor.valor + " sucesor");
-            
-            // if(eliminar.izq.valor.compareTo(elem) != 0) {
-            //     eliminar.izq.padre = sucesor;
-            // }
-            
-            // if(eliminar.der.valor.compareTo(elem) != 0) {
-            //     eliminar.der.padre = sucesor;
-            // }
+            eliminar(sucesor.valor);
 
-            eliminar.izq.padre = sucesor;
-            eliminar.der.padre = sucesor;
+            _cardinal++;
 
-            sucesor.padre.izq = null;
-
-            sucesor.izq = eliminar.izq;
-
-            if(eliminar.der.valor.compareTo(sucesor.valor) != 0) {
-                sucesor.der = eliminar.der;
-            } else {
-                sucesor.der = eliminar.der.der;
-            }
-            
             if(padreEliminar != null) {
                 sucesor.padre = padreEliminar;
 
                 if(padreEliminar.der != null && elem.compareTo(padreEliminar.der.valor) == 0) {
                     padreEliminar.der = sucesor; // valor que estoy eliminando
-                } else if (padreEliminar.izq != null && elem.compareTo(padreEliminar.izq.valor) == 0) {
+                } 
+                
+                if (padreEliminar.izq != null && elem.compareTo(padreEliminar.izq.valor) == 0) {
                     padreEliminar.izq = sucesor;
                 }
             } else {
@@ -232,15 +195,21 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
                 _raiz.padre = null;
             }
 
+            sucesor.izq = eliminar.izq;
+            sucesor.der = eliminar.der;
+
+            eliminar.izq.padre = sucesor;
+
+            // Por si es el que acabo de eliminar
+            if(eliminar.der != null) {
+                eliminar.der.padre = sucesor;
+            }
+
             return;
         }
 
         // tiene 1 solo hijo y es el menor
-        // correcto
         Nodo sucesor = eliminar.izq != null ? eliminar.izq : eliminar.der;
-
-        System.out.println(elem + " Tiene 1 solo hijo");
-        System.out.println(sucesor.valor + " sucesor");
 
         if(padreEliminar != null) {
             sucesor.padre = padreEliminar;
@@ -300,8 +269,6 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
                 break;
             } else {
                 ancestor = ancestor.padre;
-
-                // break;
             }
         }
 
